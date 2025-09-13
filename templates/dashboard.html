@@ -49,7 +49,7 @@
             </button>
             {% else %}
             <button class="btn btn-outline-primary me-2" id="myMeasurementsBtn">
-                <i class="bi bi-person-lines-fill"></i> My Measurements
+                <i class="bi bi-person-lines-fill"></i> Customer Measurements
             </button>
             {% endif %}
         </div>
@@ -952,7 +952,7 @@
             });
         });
         
-        // My Measurements / All Measurements button click handler
+        // Customer Measurements / All Measurements button click handler
         const myMeasurementsBtn = document.getElementById('myMeasurementsBtn');
         const allMeasurementsBtn = document.getElementById('allMeasurementsBtn');
         
@@ -1491,7 +1491,7 @@
             measurementSection.style.display = 'none';
         }
         
-        // Handle My Measurements button click
+        // Handle Customer Measurements button click
         const myMeasurementsBtn = document.getElementById('myMeasurementsBtn');
         if (myMeasurementsBtn) {
             myMeasurementsBtn.addEventListener('click', function() {

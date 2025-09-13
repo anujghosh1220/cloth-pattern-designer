@@ -222,23 +222,28 @@ def login():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    
+        
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists')
+        if not username or not password:
+            flash('Please fill in all fields', 'danger')
             return redirect(url_for('register'))
-        
+            
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists', 'danger')
+            return redirect(url_for('register'))
+            
         user = User(username=username)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
         
-        flash('Registration successful! Please log in.')
+        flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('login'))
-    
+        
     return render_template('register.html')
 
 @app.route('/dashboard')
