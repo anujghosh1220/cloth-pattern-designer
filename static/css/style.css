@@ -45,51 +45,6 @@ body.auth-page {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     padding: 0.8rem 1rem;
     transition: all 0.3s ease;
-    min-height: 60px;
-}
-
-/* Navbar Toggler */
-.navbar-toggler {
-    border: none;
-    padding: 0.5rem;
-}
-
-.navbar-toggler:focus {
-    box-shadow: none;
-    outline: none;
-}
-
-/* Navbar Collapse */
-.navbar-collapse {
-    padding-top: 1rem;
-}
-
-/* Navbar Brand */
-.navbar-brand {
-    padding: 0.5rem 0;
-}
-
-/* Navbar Nav */
-.navbar-nav {
-    padding: 0.5rem 0;
-}
-
-.nav-item {
-    margin: 0.25rem 0;
-}
-
-@media (min-width: 992px) {
-    .navbar-collapse {
-        padding-top: 0;
-    }
-    
-    .navbar-nav {
-        padding: 0;
-    }
-    
-    .nav-item {
-        margin: 0 0.5rem;
-    }
 }
 
 /* Neon effect for brand text - only on non-auth pages */
