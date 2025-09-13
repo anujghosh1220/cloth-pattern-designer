@@ -1,0 +1,33 @@
+{% for row in measurements %}
+<tr>
+    <td>#{{ row.job_number }}</td>
+    <td>{{ row.Customer.name }}</td>
+    <td>{{ row.Customer.phone }}</td>
+    <td>{{ row.SavedMeasurement.category|title }}</td>
+    <td>{{ row.SavedMeasurement.order_date.strftime('%Y-%m-%d') if row.SavedMeasurement.order_date else 'N/A' }}</td>
+    <td>
+        <button class="btn btn-sm btn-primary view-measurement me-1" data-id="{{ row.SavedMeasurement.id }}">
+            <i class="bi bi-eye"></i> View
+        </button>
+        <button class="btn btn-sm btn-outline-secondary record-audio me-1" 
+                data-id="{{ row.SavedMeasurement.id }}"
+                data-audio-url="{{ url_for('get_audio', filename=row.SavedMeasurement.audio_path.split('/')[-1]) if row.SavedMeasurement.audio_path else '' }}">
+            <i class="bi bi-mic"></i> Audio
+        </button>
+        <button class="btn btn-sm btn-outline-info export-pdf me-1" data-id="{{ row.SavedMeasurement.id }}">
+            <i class="bi bi-file-pdf"></i> PDF
+        </button>
+        <button class="btn btn-sm btn-outline-success view-notes" 
+                data-id="{{ row.SavedMeasurement.id }}"
+                data-notes="{{ row.SavedMeasurement.notes or '' }}">
+            <i class="bi bi-journal-text"></i> Notes
+        </button>
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="6" class="text-center py-4">
+        <div class="text-muted">No measurements found</div>
+    </td>
+</tr>
+{% endfor %}

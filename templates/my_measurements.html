@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}My Measurements - Cloth Pattern Designer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .customer-row:hover {
+        background-color: #f8f9fa;
+    }
+    .customer-row[aria-expanded="true"] {
+        background-color: #f1f8ff;
+    }
+    .order-details {
+        background-color: #f8f9fa;
+    }
+    .order-row {
+        transition: background-color 0.2s;
+    }
+    .order-row:hover {
+        background-color: #e9ecef;
+    }
+    .badge-category {
+        font-size: 0.8em;
+        text-transform: capitalize;
+    }
+    .measurement-value {
+        font-weight: 500;
+    }
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    .table-responsive {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .no-measurements {
+        text-align: center;
+        padding: 2rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    .customer-info {
+        display: flex;
+        align-items: center;
+    }
+    .customer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-weight: bold;
+    }
+    .customer-details {
+        line-height: 1.2;
+    }
+    .customer-name {
+        font-weight: 600;
+        margin-bottom: 0.1rem;
+    }
+    .customer-contact {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .order-date {
+        white-space: nowrap;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Measurements</h2>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>Customer</th>
+                        <th class="text-center">Orders</th>
+                        <th class="text-end">Last Order</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr class="customer-row" 
+                        data-bs-toggle="collapse" 
+                        href="#customer{{ customer.id }}" 
+                        role="button" 
+                        aria-expanded="false" 
+                        aria-controls="customer{{ customer.id }}">
+                        <td>
+                            <i class="bi bi-chevron-right"></i>
+                        </td>
+                        <td>
+                            <div class="customer-info">
+                                <div class="customer-avatar">
+                                    {{ customer.name[0].upper() }}
+                                </div>
+                                <div class="customer-details">
+                                    <div class="customer-name">{{ customer.name }}</div>
+                                    <div class="customer-contact">
+                                        {{ customer.phone }}
+                                        {% if customer.email %}
+                                            <span class="mx-1">•</span> {{ customer.email }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary rounded-pill">
+                                {{ customer.measurement_count }} order{% if customer.measurement_count != 1 %}s{% endif %}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            {% if customer.measurements %}
+                                <span class="order-date">
+                                    {{ customer.measurements[0].created_at.strftime('%b %d, %Y') }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="order-details">
+                        <td colspan="4" class="p-0 border-0">
+                            <div class="collapse" id="customer{{ customer.id }}">
+                                <div class="p-3">
+                                    <h5 class="mb-3">{{ customer.name }}'s Orders</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order Date</th>
+                                                    <th>Category</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for measurement in customer.measurements %}
+                                                <tr class="order-row">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-calendar3 me-2 text-muted"></i>
+                                                            <span>
+                                                                {{ measurement.created_at.strftime('%b %d, %Y') }}
+                                                                <small class="d-block text-muted">
+                                                                    {{ measurement.created_at.strftime('%I:%M %p') }}
+                                                                </small>
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary badge-category">
+                                                            {{ measurement.category|title }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {% if measurement.delivery_date and measurement.delivery_date < now %}
+                                                            <span class="badge bg-success">Delivered</span>
+                                                        {% elif measurement.delivery_date %}
+                                                            <span class="badge bg-info">In Progress</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning">Pending</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end action-buttons">
+                                                        <a href="{{ url_for('dashboard') }}?load_measurement={{ measurement.id }}" 
+                                                           class="btn btn-sm btn-outline-primary me-1"
+                                                           title="View/Edit">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <a href="#" 
+                                                           class="btn btn-sm btn-outline-secondary me-1 generate-pdf"
+                                                           data-measurement-id="{{ measurement.id }}"
+                                                           title="Generate PDF">
+                                                            <i class="bi bi-file-earmark-pdf"></i>
+                                                        </a>
+                                                        <a href="#" 
+                                                           class="btn btn-sm btn-outline-danger delete-measurement"
+                                                           data-measurement-id="{{ measurement.id }}"
+                                                           data-customer-name="{{ customer.name }}"
+                                                           title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="no-measurements">
+            <i class="bi bi-rulers display-1 text-muted mb-4"></i>
+            <h4>No measurements found</h4>
+            <p class="text-muted">You haven't saved any measurements yet.</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-3">
+                <i class="bi bi-plus-circle"></i> Take New Measurements
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this measurement for <strong id="customerName"></strong>?</p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDelete" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle customer row click to rotate chevron
+        document.querySelectorAll('.customer-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const icon = this.querySelector('i.bi-chevron-right');
+                if (icon) {
+                    icon.style.transition = 'transform 0.2s';
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+                }
+            });
+        });
+
+        // Handle delete measurement button click
+        const deleteButtons = document.querySelectorAll('.delete-measurement');
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const customerNameSpan = document.getElementById('customerName');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const customerName = this.getAttribute('data-customer-name');
+                const measurementId = this.getAttribute('data-measurement-id');
+                
+                customerNameSpan.textContent = customerName;
+                confirmDeleteBtn.href = `{{ url_for('delete_measurement', measurement_id=0) }}`.replace('0', measurementId);
+                
+                deleteModal.show();
+            });
+        });
+
+        // Handle generate PDF button click
+        document.querySelectorAll('.generate-pdf').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const measurementId = this.getAttribute('data-measurement-id');
+                // Show loading state
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+                this.disabled = true;
+                
+                // In a real implementation, you would call your PDF generation endpoint here
+                // For now, we'll just simulate a delay and show a message
+                setTimeout(() => {
+                    // Revert button state
+                    this.innerHTML = originalHtml;
+                    this.disabled = false;
+                    
+                    // Show success message
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+                    alert.role = 'alert';
+                    alert.innerHTML = `
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        PDF generated successfully for measurement #${measurementId}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    
+                    // Insert after the button's parent row
+                    const row = this.closest('tr');
+                    if (row) {
+                        const nextRow = row.nextElementSibling;
+                        if (nextRow && nextRow.classList.contains('alert')) {
+                            nextRow.remove();
+                        }
+                        row.parentNode.insertBefore(alert, row.nextSibling);
+                        
+                        // Auto-hide after 5 seconds
+                        setTimeout(() => {
+                            const bsAlert = new bootstrap.Alert(alert);
+                            bsAlert.close();
+                        }, 5000);
+                    }
+                }, 1500);
+            });
+        });
+    });
+</script>
+{% endblock %}
