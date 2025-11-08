@@ -1,79 +1,90 @@
-# Draping Threadss - Tailoring Management System
+# Draping Threads - Tailoring Management System
 
-A comprehensive web application for managing tailoring orders, customer measurements, and pattern generation, built with Flask and modern web technologies. This system streamlines the workflow of tailoring businesses by digitizing customer information, measurements, and order tracking.
+![Draping Threads Logo](static/images/logo.png)
 
-## 🚀 Features
+A comprehensive, production-ready web application for modern tailoring businesses. Draping Threads streamlines the entire tailoring workflow, from customer management to order tracking and pattern generation, all built with Flask and modern web technologies.
 
-### Core Functionality
-- **User Authentication**
-  - Secure login/register system
-  - Role-based access control (Admin/User roles)
-  - Password hashing for security
-  - Session management
+## 🌟 Key Features
 
-- **Customer Management**
-  - Add, edit, and delete customer profiles
-  - Store contact information and addresses
-  - View customer order history
-  - Search and filter customers
+### 👤 User Management
+- **Authentication & Authorization**
+  - Secure login/registration system
+  - Role-based access control (Admin/User)
+  - Password hashing with bcrypt
+  - Session management with Flask-Login
 
-- **Order Management**
+### 👔 Customer Management
+- **Customer Profiles**
+  - Comprehensive customer database
+  - Contact information and addresses
+  - Customer history and preferences
+  - Advanced search and filtering
+
+### 📦 Order Management
+- **Order Processing**
   - Create and track orders with unique job numbers
-  - Monitor order status (pending, in-progress, completed, delivered)
-  - Record advance payments and track balances
-  - Set and manage delivery dates with reminders
-  - Generate order invoices
+  - Real-time order status updates
+  - Payment tracking (advance, balance, total)
+  - Delivery date management with reminders
+  - Invoice generation
 
-- **Measurement System**
-  - Comprehensive measurement recording
-  - Support for different garment types
+### 📏 Measurement System
+- **Precise Measurements**
+  - Comprehensive body measurement recording
+  - Support for various garment types
   - Visual measurement guides
-  - Measurement history tracking
-  - Export measurements to PDF
+  - Measurement history and versioning
+  - PDF export functionality
 
-- **Advanced Features**
-  - Pattern generation based on measurements
-  - Image upload for design references
+### ✂️ Advanced Features
+- **Pattern Generation**
+  - Automated pattern creation from measurements
+  - Custom pattern adjustments
+  - Print-ready pattern exports
+- **Media Management**
+  - Image uploads for design references
   - Audio notes for special instructions
-  - Responsive design for all devices
-  - Data export/import capabilities
+  - Document storage
+- **Reporting**
+  - Sales and revenue reports
+  - Order status overview
+  - Customer analytics
 
-## 🛠️ Prerequisites
+## 🚀 Getting Started
 
-- Python 3.8 or higher
+### Prerequisites
+- Python 3.8+
 - pip (Python package manager)
 - SQLite (included with Python)
 - Modern web browser (Chrome, Firefox, Edge, or Safari)
 
-## 🚀 Installation Guide
+### Installation
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/cloth-pattern-designer.git
-cd cloth-pattern-designer
-```
-
-### 2. Set Up Virtual Environment (Recommended)
-#### Windows:
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### macOS/Linux:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configuration
-1. Create a `.env` file in the project root with the following content:
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/yourusername/cloth-pattern-designer.git
+   cd cloth-pattern-designer
    ```
+
+2. **Set Up Virtual Environment**
+   ```bash
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+
+   # macOS/Linux
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configuration**
+   Create a `.env` file in the project root:
+   ```env
    FLASK_APP=app.py
    FLASK_ENV=development
    FLASK_SECRET_KEY=your-secure-secret-key-here
@@ -82,22 +93,83 @@ pip install -r requirements.txt
    MAX_CONTENT_LENGTH=16 * 1024 * 1024  # 16MB max file size
    ```
 
-2. Initialize the database:
+5. **Initialize Database**
    ```bash
    flask init-db
    ```
 
-## 🏃‍♂️ Running the Application
+## 🏃 Running the Application
 
 ### Development Mode
 ```bash
 flask run
 ```
-Then open your browser and navigate to `http://localhost:5000`
+Access the application at `http://localhost:5000`
 
 ### Production Deployment
-For production deployment, consider using:
+For production deployment, we recommend using:
 - Gunicorn or uWSGI as the WSGI server
+- Nginx as the reverse proxy
+- PostgreSQL or MySQL for the database
+- Environment variables for configuration
+
+Example with Gunicorn:
+```bash
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
+
+## 📂 Project Structure
+```
+cloth-pattern-designer/
+├── app.py                 # Main application file
+├── config.py              # Configuration settings
+├── requirements.txt       # Project dependencies
+├── static/                # Static files (CSS, JS, images)
+│   ├── css/               # Stylesheets
+│   ├── js/                # JavaScript files
+│   └── uploads/           # User uploads
+├── templates/             # HTML templates
+├── migrations/            # Database migrations
+└── instance/              # Instance folder for local configuration
+```
+
+## 📚 Documentation
+
+### Database Models
+- **User**: Manages user accounts and authentication
+- **Customer**: Stores customer information
+- **Order**: Tracks orders and their status
+- **Measurement**: Stores body measurements
+- **Pattern**: Manages generated patterns
+
+### API Endpoints
+- `/api/customers`: Customer management
+- `/api/orders`: Order processing
+- `/api/measurements`: Measurement handling
+- `/api/patterns`: Pattern generation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with Flask and modern web technologies
+- Inspired by the needs of modern tailoring businesses
+- Special thanks to all contributors
+
+## 📞 Support
+
+For support, email support@drapingthreads.com or open an issue in the GitHub repository.
 - Nginx or Apache as the reverse proxy
 - PostgreSQL or MySQL for the database
 

@@ -193,6 +193,63 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Routes
+@app.route('/pattern-generator')
+@login_required
+def pattern_generator():
+    phone = request.args.get('phone')
+    customer = None
+    measurements_data = []
+    
+    if phone:
+        # Search for customer by phone number (exact match)
+        customer = Customer.query.filter_by(phone=phone, user_id=current_user.id).first()
+        
+        if customer:
+            # Get all measurements for this customer
+            measurements = SavedMeasurement.query.filter_by(
+                customer_id=customer.id
+            ).order_by(SavedMeasurement.created_at.desc()).all()
+            
+            # Convert measurements to a list of dictionaries with measurement data
+            for m in measurements:
+                # Create a dictionary with all measurement fields
+                measurement_dict = {
+                    'length': m.length,
+                    'across_shoulder': m.across_shoulder,
+                    'upper_chest': m.upper_chest,
+                    'chest': m.chest,
+                    'waist': m.waist,
+                    'front_neck_depth': m.front_neck_depth,
+                    'back_neck_depth': m.back_neck_depth,
+                    'sleeve_length': m.sleeve_length,
+                    'armhole': m.armhole,
+                    'biceps': m.biceps,
+                    'sleeve_cuff': m.sleeve_cuff,
+                    'shoulder_apex': m.shoulder_apex,
+                    'hip': m.hip,
+                    'waist_floor': m.waist_floor,
+                    'belt': m.belt,
+                    'waist_ankle': m.waist_ankle,
+                    'thigh': m.thigh,
+                    'ankle': m.ankle,
+                    'notes': m.notes
+                }
+                
+                # Remove None values
+                measurement_dict = {k: v for k, v in measurement_dict.items() if v is not None}
+                
+                measurements_data.append({
+                    'id': m.id,
+                    'category': m.category,
+                    'created_at': m.created_at,
+                    'measurements': measurement_dict
+                })
+    
+    return render_template('pattern_generator.html', 
+                         customer=customer, 
+                         measurements=measurements_data,
+                         search_phone=phone)
+
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -1044,6 +1101,7 @@ def delete_measurement(measurement_id):
 @login_required
 def customer_measurements():
     phone = request.args.get('phone')
+    name = request.args.get('name')
     
     # Base query with descending job numbers (most recent = 1)
     subquery = db.session.query(
@@ -1069,9 +1127,12 @@ def customer_measurements():
         SavedMeasurement.user_id == current_user.id
     )
     
-    # Apply phone number filter if provided
+    # Apply filters if provided
     if phone:
         query = query.filter(Customer.phone.ilike(f'%{phone}%'))
+    if name:
+        # Search for names that start with the search term (case insensitive)
+        query = query.filter(Customer.name.ilike(f'{name}%'))
     
     # Execute query
     measurements = query.order_by(SavedMeasurement.created_at.desc()).all()

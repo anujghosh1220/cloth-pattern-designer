@@ -1,0 +1,185 @@
+/* Pattern Generator Specific Styles with Animations */
+
+/* Canvas Container with subtle shadow and animation */
+.canvas-container {
+    position: relative;
+    margin: 2rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(20px);
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out forwards;
+    background: white;
+    border: 1px solid #e9ecef;
+}
+
+/* Animation for canvas elements */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pattern controls animation */
+.pattern-controls {
+    transform: translateY(10px);
+    opacity: 0;
+    animation: fadeIn 0.5s 0.3s ease-out forwards;
+}
+
+/* Card hover effects */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Form elements animation */
+.form-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeIn 0.5s 0.4s ease-out forwards;
+}
+
+/* Input field focus effects */
+.form-control:focus {
+    border-color: #4b6cb7;
+    box-shadow: 0 0 0 0.2rem rgba(75, 108, 183, 0.25);
+    transition: all 0.3s ease;
+}
+
+/* Button animations */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.btn-primary:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #4b6cb7;
+    z-index: -2;
+}
+
+.btn-primary:before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    background-color: #3a5a9a;
+    transition: all 0.3s ease;
+    z-index: -1;
+}
+
+.btn-primary:hover:before {
+    width: 100%;
+}
+
+/* Animation for measurement cards */
+.measurement-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.measurement-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Pattern piece highlight animation */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(75, 108, 183, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(75, 108, 183, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(75, 108, 183, 0);
+    }
+}
+
+.highlight-pattern {
+    animation: pulse 1.5s infinite;
+}
+
+/* Loading animation */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(75, 108, 183, 0.3);
+    border-radius: 50%;
+    border-top-color: #4b6cb7;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .canvas-container {
+        margin: 1rem 0;
+    }
+    
+    .card {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Tooltip animations */
+.tooltip {
+    transition: opacity 0.3s, transform 0.2s;
+}
+
+.tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animation for measurement inputs */
+.measurement-input {
+    transition: all 0.3s ease;
+}
+
+.measurement-input:focus {
+    border-color: #4b6cb7;
+    box-shadow: 0 0 0 0.2rem rgba(75, 108, 183, 0.25);
+}
+
+/* Animation for pattern pieces */
+.pattern-piece {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.pattern-piece.visible {
+    opacity: 1;
+    transform: scale(1);
+}
