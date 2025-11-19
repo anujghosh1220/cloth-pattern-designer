@@ -31,147 +31,67 @@ A comprehensive, production-ready web application for modern tailoring businesse
 ### 📏 Measurement System
 - **Precise Measurements**
   - Comprehensive body measurement recording
-  - Support for various garment types
-  - Visual measurement guides
-  - Measurement history and versioning
-  - PDF export functionality
 
-### ✂️ Advanced Features
-- **Pattern Generation**
-  - Automated pattern creation from measurements
-  - Custom pattern adjustments
-  - Print-ready pattern exports
-- **Media Management**
-  - Image uploads for design references
-  - Audio notes for special instructions
-  - Document storage
-- **Reporting**
-  - Sales and revenue reports
-  - Order status overview
-  - Customer analytics
+## 🚀 Installation
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.8+
-- pip (Python package manager)
-- SQLite (included with Python)
-- Modern web browser (Chrome, Firefox, Edge, or Safari)
-
-### Installation
-
-1. **Clone the Repository**
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/cloth-pattern-designer.git
+   git clone <repository-url>
    cd cloth-pattern-designer
    ```
 
-2. **Set Up Virtual Environment**
+2. **Create a virtual environment**
    ```bash
-   # Windows
    python -m venv venv
+   
+   # Windows
    venv\Scripts\activate
-
+   
    # macOS/Linux
-   python3 -m venv venv
    source venv/bin/activate
    ```
 
-3. **Install Dependencies**
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configuration**
-   Create a `.env` file in the project root:
-   ```env
+4. **Set up environment variables**
+   ```bash
+   # Create a .env file
    FLASK_APP=app.py
    FLASK_ENV=development
-   FLASK_SECRET_KEY=your-secure-secret-key-here
+   SECRET_KEY=your-secret-key-here
    DATABASE_URL=sqlite:///cloth.db
-   UPLOAD_FOLDER=./static/uploads
-   MAX_CONTENT_LENGTH=16 * 1024 * 1024  # 16MB max file size
    ```
 
-5. **Initialize Database**
+5. **Initialize the database**
    ```bash
-   flask init-db
+   python migrate.py
    ```
 
-## 🏃 Running the Application
+6. **Run the application**
+   ```bash
+   python app.py
+   ```
 
-### Development Mode
-```bash
-flask run
-```
-Access the application at `http://localhost:5000`
+   The application will be available at `http://localhost:5000`
 
-### Production Deployment
-For production deployment, we recommend using:
-- Gunicorn or uWSGI as the WSGI server
-- Nginx as the reverse proxy
-- PostgreSQL or MySQL for the database
-- Environment variables for configuration
+## 🔧 Configuration
 
-Example with Gunicorn:
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
+### Environment Variables
+- `FLASK_APP`: Flask application entry point
+- `FLASK_ENV`: Environment (development/production)
+- `SECRET_KEY`: Secret key for session management
+- `DATABASE_URL`: Database connection string
 
-## 📂 Project Structure
-```
-cloth-pattern-designer/
-├── app.py                 # Main application file
-├── config.py              # Configuration settings
-├── requirements.txt       # Project dependencies
-├── static/                # Static files (CSS, JS, images)
-│   ├── css/               # Stylesheets
-│   ├── js/                # JavaScript files
-│   └── uploads/           # User uploads
-├── templates/             # HTML templates
-├── migrations/            # Database migrations
-└── instance/              # Instance folder for local configuration
-```
+### Database Configuration
+The application supports multiple database backends:
+- SQLite (default): `sqlite:///cloth.db`
+- PostgreSQL: `postgresql://user:password@localhost/dbname`
+- MySQL: `mysql://user:password@localhost/dbname`
 
-## 📚 Documentation
-
-### Database Models
-- **User**: Manages user accounts and authentication
-- **Customer**: Stores customer information
-- **Order**: Tracks orders and their status
-- **Measurement**: Stores body measurements
-- **Pattern**: Manages generated patterns
-
-### API Endpoints
-- `/api/customers`: Customer management
-- `/api/orders`: Order processing
-- `/api/measurements`: Measurement handling
-- `/api/patterns`: Pattern generation
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with Flask and modern web technologies
-- Inspired by the needs of modern tailoring businesses
-- Special thanks to all contributors
-
-## 📞 Support
-
-For support, email support@drapingthreads.com or open an issue in the GitHub repository.
-- Nginx or Apache as the reverse proxy
-- PostgreSQL or MySQL for the database
+## � Project Structure
 
 ## 🔐 Default Admin Account
 

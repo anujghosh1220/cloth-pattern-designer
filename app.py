@@ -306,7 +306,28 @@ def register():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    if current_user.username == 'admin':
+        # Admin dashboard data
+        users = User.query.all()
+        customers = Customer.query.all()
+        
+        # Calculate total amount across all customers
+        total_amount = db.session.query(db.func.sum(Customer.total_amount)).scalar() or 0
+        
+        # Get customers for each user
+        user_customers = {}
+        for user in users:
+            user_customers[user.id] = Customer.query.filter_by(user_id=user.id).all()
+        
+        return render_template('dashboard.html', 
+                             is_admin=True,
+                             users=users,
+                             customers=customers,
+                             user_customers=user_customers,
+                             total_amount=total_amount)
+    else:
+        # Regular user dashboard
+        return render_template('dashboard.html', is_admin=False)
 
 @app.route('/admin/users')
 @login_required

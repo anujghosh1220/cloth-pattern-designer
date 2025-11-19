@@ -147,6 +147,17 @@
                                         <input type="hidden" id="garmentCategory" value="{{ measurements[0].category }}">
                                         {% endif %}
                                         
+                                        <!-- Blouse Style Selection (initially hidden) -->
+                                        <div id="blouseStyleContainer" class="col-12 d-none">
+                                            <label class="form-label">Select Blouse Style</label>
+                                            <select class="form-select" id="blouseStyle">
+                                                <option value="4dart">4 Dart Blouse</option>
+                                                <option value="princess_cut">Princess Cut</option>
+                                                <option value="belt_blouse">Belt Blouse</option>
+                                                <option value="sabyasachi">Sabyasachi Blouse</option>
+                                            </select>
+                                        </div>
+                                        
                                         <div class="col-md-6">
                                             <label for="clothLength" class="form-label">Cloth Length (in inches)</label>
                                             <input type="number" step="0.01" class="form-control" id="clothLength" required>
@@ -181,6 +192,24 @@
                             "{{ m.category }}": {{ m.measurements|tojson|safe }}{% if not loop.last %},{% endif %}
                             {% endfor %}
                         }`);
+                        
+                        // Show/hide blouse style dropdown based on garment selection
+                        function toggleBlouseStyle() {
+                            const garmentCategory = document.getElementById('garmentCategory');
+                            const blouseStyleContainer = document.getElementById('blouseStyleContainer');
+                            
+                            if (garmentCategory.value.toLowerCase() === 'blouse') {
+                                blouseStyleContainer.classList.remove('d-none');
+                            } else {
+                                blouseStyleContainer.classList.add('d-none');
+                            }
+                        }
+                        
+                        // Add event listener for garment category change
+                        document.getElementById('garmentCategory').addEventListener('change', toggleBlouseStyle);
+                        
+                        // Initialize visibility on page load
+                        document.addEventListener('DOMContentLoaded', toggleBlouseStyle);
                         
                         // Seam allowance in inches
                         const SEAM_ALLOWANCE = 1;
@@ -253,7 +282,9 @@
                                 currentPiece: null,
                                 offsetX: 0,
                                 offsetY: 0,
-                                pieces: {}
+                                pieces: {},
+                                handlersInitialized: false,
+                                measurements: null
                             },
                             
                             // Draw a measurement arrow between two points
@@ -353,89 +384,263 @@
                                 ctx.restore();
                             },
                             
-                            // Initialize draggable functionality for a pattern piece
-                            makeDraggable: function(canvas, pieceId, x, y, width, height) {
-                                const self = this;
-                                const piece = { id: pieceId, x: x, y: y, width: width, height: height };
+                            // Initialize draggable functionality for a pattern piece with image
+                            makeDraggable: function(canvas, pieceId, x, y, width, height, image, redrawCallback) {
+                                const piece = { id: pieceId, x: x, y: y, width: width, height: height, image: image };
                                 this.dragState.pieces[pieceId] = piece;
                                 
-                                // Set initial position
-                                const updatePosition = (x, y) => {
-                                    piece.x = x;
-                                    piece.y = y;
-                                    // Redraw all patterns
-                                    const category = document.getElementById('garmentCategory')?.value.toLowerCase() || 'pant';
-                                    const patternCanvas = document.getElementById('patternCanvas');
-                                    const ctx = patternCanvas.getContext('2d');
-                                    ctx.clearRect(0, 0, patternCanvas.width, patternCanvas.height);
-                                    drawGridAndScale(ctx, patternCanvas.width, patternCanvas.height, 20);
+                                return piece;
+                            },
+                            
+                            // Initialize global mouse handlers (call this once after all pieces are created)
+                            initializeGlobalDragHandlers: function(canvas) {
+                                const self = this;
+                                
+                                // Global mouse down handler
+                                const mousedownHandler = function(e) {
+                                    const rect = canvas.getBoundingClientRect();
+                                    const mouseX = e.clientX - rect.left;
+                                    const mouseY = e.clientY - rect.top;
                                     
-                                    // Redraw all pieces in their current positions
-                                    Object.values(this.dragState.pieces).forEach(p => {
-                                        ctx.save();
-                                        ctx.translate(p.x, p.y);
-                                        // Call the appropriate pattern generator based on the piece ID
-                                        if (p.id.includes('front')) {
-                                            PatternGenerator.drawPatternPiece(ctx, 'front', p.width, p.height, p.id);
-                                        } else if (p.id.includes('back')) {
-                                            PatternGenerator.drawPatternPiece(ctx, 'back', p.width, p.height, p.id);
-                                        } else if (p.id.includes('pocket')) {
-                                            PatternGenerator.drawPatternPiece(ctx, 'pocket', p.width, p.height, p.id);
-                                        } else if (p.id.includes('waistband')) {
-                                            PatternGenerator.drawPatternPiece(ctx, 'waistband', p.width, p.height, p.id);
-                                        } else if (p.id.includes('sleeve')) {
-                                            PatternGenerator.drawPatternPiece(ctx, 'sleeve', p.width, p.height, p.id);
+                                    // Check all pieces to see which one was clicked
+                                    Object.values(self.dragState.pieces).forEach(piece => {
+                                        if (mouseX >= piece.x && mouseX <= piece.x + piece.width && 
+                                            mouseY >= piece.y && mouseY <= piece.y + piece.height) {
+                                            self.dragState.isDragging = true;
+                                            self.dragState.currentPiece = piece.id;
+                                            self.dragState.offsetX = mouseX - piece.x;
+                                            self.dragState.offsetY = mouseY - piece.y;
+                                            canvas.style.cursor = 'grabbing';
                                         }
-                                        ctx.restore();
                                     });
                                 };
                                 
-                                // Mouse down handler
-                                canvas.addEventListener('mousedown', function(e) {
+                                // Global mouse move handler
+                                const mousemoveHandler = function(e) {
                                     const rect = canvas.getBoundingClientRect();
-                                    const x = e.clientX - rect.left;
-                                    const y = e.clientY - rect.top;
+                                    const mouseX = e.clientX - rect.left;
+                                    const mouseY = e.clientY - rect.top;
                                     
-                                    // Check if click is within this piece
-                                    if (x >= piece.x && x <= piece.x + piece.width && 
-                                        y >= piece.y && y <= piece.y + piece.height) {
-                                        self.dragState.isDragging = true;
-                                        self.dragState.currentPiece = pieceId;
-                                        self.dragState.offsetX = x - piece.x;
-                                        self.dragState.offsetY = y - piece.y;
-                                        canvas.style.cursor = 'grabbing';
+                                    if (self.dragState.isDragging) {
+                                        // Handle dragging
+                                        const piece = self.dragState.pieces[self.dragState.currentPiece];
+                                        if (piece) {
+                                            const newX = mouseX - self.dragState.offsetX;
+                                            const newY = mouseY - self.dragState.offsetY;
+                                            
+                                            // Constrain to canvas bounds
+                                            piece.x = Math.max(0, Math.min(newX, canvas.width - piece.width));
+                                            piece.y = Math.max(0, Math.min(newY, canvas.height - piece.height));
+                                            
+                                            // Redraw all patterns
+                                            const ctx = canvas.getContext('2d');
+                                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                            drawGridAndScale(ctx, canvas.width, canvas.height, 20);
+                                            
+                                            // Redraw all pieces in their current positions with measurements
+                                            Object.values(self.dragState.pieces).forEach(p => {
+                                                if (p.image) {
+                                                    ctx.drawImage(p.image, p.x, p.y, p.width, p.height);
+                                                    // Redraw measurements and label for this piece
+                                                    if (self.dragState.measurements) {
+                                                        self.drawBlouseMeasurements(ctx, self.dragState.measurements, p.id, p.x, p.y, p.width, p.height);
+                                                    }
+                                                    
+                                                    // Redraw label for this piece
+                                                    ctx.save();
+                                                    ctx.fillStyle = '#000';
+                                                    ctx.font = '14px Arial';
+                                                    ctx.textAlign = 'center';
+                                                    const label = p.id.charAt(0).toUpperCase() + p.id.slice(1);
+                                                    ctx.fillText(label, p.x + p.width/2, p.y + p.height + 20);
+                                                    ctx.restore();
+                                                }
+                                            });
+                                        }
+                                    } else {
+                                        // Check hover over any piece
+                                        let hoveringOverPiece = false;
+                                        Object.values(self.dragState.pieces).forEach(piece => {
+                                            if (mouseX >= piece.x && mouseX <= piece.x + piece.width && 
+                                                mouseY >= piece.y && mouseY <= piece.y + piece.height) {
+                                                hoveringOverPiece = true;
+                                            }
+                                        });
+                                        
+                                        if (hoveringOverPiece) {
+                                            canvas.style.cursor = 'grab';
+                                        } else {
+                                            canvas.style.cursor = 'default';
+                                        }
                                     }
-                                });
+                                };
                                 
-                                // Mouse move handler
-                                canvas.addEventListener('mousemove', function(e) {
-                                    if (self.dragState.isDragging && self.dragState.currentPiece === pieceId) {
-                                        const rect = canvas.getBoundingClientRect();
-                                        const x = e.clientX - rect.left - self.dragState.offsetX;
-                                        const y = e.clientY - rect.top - self.dragState.offsetY;
-                                        updatePosition(x, y);
-                                    }
-                                });
-                                
-                                // Mouse up handler
-                                canvas.addEventListener('mouseup', function() {
-                                    if (self.dragState.currentPiece === pieceId) {
-                                        self.dragState.isDragging = false;
-                                        self.dragState.currentPiece = null;
-                                        canvas.style.cursor = 'grab';
-                                    }
-                                });
-                                
-                                // Mouse leave handler
-                                canvas.addEventListener('mouseleave', function() {
-                                    if (self.dragState.currentPiece === pieceId) {
+                                // Global mouse up handler
+                                const mouseupHandler = function() {
+                                    if (self.dragState.isDragging) {
                                         self.dragState.isDragging = false;
                                         self.dragState.currentPiece = null;
                                         canvas.style.cursor = 'default';
                                     }
+                                };
+                                
+                                // Global mouse leave handler
+                                const mouseleaveHandler = function() {
+                                    if (self.dragState.isDragging) {
+                                        self.dragState.isDragging = false;
+                                        self.dragState.currentPiece = null;
+                                        canvas.style.cursor = 'default';
+                                    }
+                                };
+                                
+                                // Only add handlers once
+                                if (!self.dragState.handlersInitialized) {
+                                    canvas.addEventListener('mousedown', mousedownHandler);
+                                    canvas.addEventListener('mousemove', mousemoveHandler);
+                                    canvas.addEventListener('mouseup', mouseupHandler);
+                                    canvas.addEventListener('mouseleave', mouseleaveHandler);
+                                    self.dragState.handlersInitialized = true;
+                                }
+                            },
+                            
+                            // Draw blouse measurements on pattern pieces
+                            drawBlouseMeasurements: function(ctx, measurements, pieceType, x, y, width, height) {
+                                ctx.save();
+                                
+                                // Set measurement style
+                                ctx.strokeStyle = '#FF5722';
+                                ctx.fillStyle = '#FF5722';
+                                ctx.lineWidth = 1.5;
+                                ctx.font = '12px Arial';
+                                
+                                const margin = 20;
+                                const arrowSize = 6;
+                                
+                                switch(pieceType) {
+                                    case 'front':
+                                        // Chest measurement
+                                        if (measurements.chest) {
+                                            const chestY = y + height * 0.3;
+                                            this.drawMeasurementArrow(ctx, x + margin, chestY, x + width - margin, chestY, 
+                                                `Chest: ${measurements.chest}"`);
+                                        }
+                                        
+                                        // Waist measurement
+                                        if (measurements.waist) {
+                                            const waistY = y + height * 0.5;
+                                            this.drawMeasurementArrow(ctx, x + margin, waistY, x + width - margin, waistY, 
+                                                `Waist: ${measurements.waist}"`);
+                                        }
+                                        
+                                        // Length measurement
+                                        if (measurements.length) {
+                                            const lengthX = x + width + 10;
+                                            this.drawMeasurementArrow(ctx, lengthX, y + margin, lengthX, y + height - margin, 
+                                                `Length: ${measurements.length}"`, {position: 'left'});
+                                        }
+                                        
+                                        // Shoulder width
+                                        if (measurements.across_shoulder) {
+                                            const shoulderY = y + height * 0.15;
+                                            this.drawMeasurementArrow(ctx, x + margin, shoulderY, x + width - margin, shoulderY, 
+                                                `Shoulder: ${measurements.across_shoulder}"`);
+                                        }
+                                        break;
+                                        
+                                    case 'back':
+                                        // Back width (chest)
+                                        if (measurements.chest) {
+                                            const chestY = y + height * 0.3;
+                                            this.drawMeasurementArrow(ctx, x + margin, chestY, x + width - margin, chestY, 
+                                                `Back: ${measurements.chest}"`);
+                                        }
+                                        
+                                        // Back waist
+                                        if (measurements.waist) {
+                                            const waistY = y + height * 0.5;
+                                            this.drawMeasurementArrow(ctx, x + margin, waistY, x + width - margin, waistY, 
+                                                `Waist: ${measurements.waist}"`);
+                                        }
+                                        break;
+                                        
+                                    case 'sleeve':
+                                        // Sleeve length
+                                        if (measurements.sleeve_length) {
+                                            const sleeveX = x + width + 10;
+                                            this.drawMeasurementArrow(ctx, sleeveX, y + margin, sleeveX, y + height - margin, 
+                                                `Sleeve: ${measurements.sleeve_length}"`, {position: 'left'});
+                                        }
+                                        
+                                        // Armhole
+                                        if (measurements.armhole) {
+                                            const armholeY = y + height * 0.2;
+                                            this.drawMeasurementArrow(ctx, x + margin, armholeY, x + width - margin, armholeY, 
+                                                `Armhole: ${measurements.armhole}"`);
+                                        }
+                                        
+                                        // Biceps
+                                        if (measurements.biceps) {
+                                            const bicepsY = y + height * 0.6;
+                                            this.drawMeasurementArrow(ctx, x + margin, bicepsY, x + width - margin, bicepsY, 
+                                                `Biceps: ${measurements.biceps}"`);
+                                        }
+                                        break;
+                                        
+                                    case 'collar':
+                                        // Neck depth measurements
+                                        if (measurements.front_neck_depth) {
+                                            const neckY = y + height * 0.5;
+                                            this.drawMeasurementArrow(ctx, x + width/2, y + margin, x + width/2, y + height - margin, 
+                                                `Neck: ${measurements.front_neck_depth}"`, {position: 'right'});
+                                        }
+                                        break;
+                                        
+                                    case 'belt':
+                                        // Belt width
+                                        if (measurements.belt) {
+                                            const beltY = y + height * 0.5;
+                                            this.drawMeasurementArrow(ctx, x + margin, beltY, x + width - margin, beltY, 
+                                                `Belt: ${measurements.belt}"`);
+                                        }
+                                        break;
+                                        
+                                    case 'cuff':
+                                        // Cuff width
+                                        if (measurements.sleeve_cuff) {
+                                            const cuffY = y + height * 0.5;
+                                            this.drawMeasurementArrow(ctx, x + margin, cuffY, x + width - margin, cuffY, 
+                                                `Cuff: ${measurements.sleeve_cuff}"`);
+                                        }
+                                        break;
+                                }
+                                
+                                ctx.restore();
+                            },
+                            
+                            // Get current measurements from the form
+                            getCurrentMeasurements: function() {
+                                const measurements = {};
+                                
+                                // Get all measurement values from the form
+                                const fields = ['length', 'across_shoulder', 'upper_chest', 'chest', 'waist', 
+                                             'front_neck_depth', 'back_neck_depth', 'sleeve_length', 'armhole', 
+                                             'biceps', 'sleeve_cuff', 'shoulder_apex', 'hip', 'waist_floor', 
+                                             'belt', 'waist_ankle', 'thigh', 'ankle'];
+                                
+                                fields.forEach(field => {
+                                    const element = document.getElementById(field);
+                                    if (element && element.value) {
+                                        measurements[field] = parseFloat(element.value);
+                                    }
                                 });
                                 
-                                return piece;
+                                // Add blouse style if selected
+                                const blouseStyle = document.getElementById('blouseStyle');
+                                if (blouseStyle && blouseStyle.value) {
+                                    measurements.style = blouseStyle.value;
+                                }
+                                
+                                return measurements;
                             },
                             
                             // Draw a pattern piece at the given position
@@ -570,106 +775,243 @@
                             
                             // Garment pattern generators
                             generateBlouse: (ctx, measurements, clothWidth, clothHeight) => {
-                                // Convert all measurements to pixels
-                                const m = {};
-                                for (const [key, value] of Object.entries(measurements)) {
-                                    m[key] = PatternGenerator.inchesToPx(parseFloat(value));
+                                const style = measurements.style || '4dart';
+                                
+                                // Get cloth dimensions from the form
+                                const clothLength = parseFloat(document.getElementById('clothLength').value);
+                                const clothWidthInches = parseFloat(document.getElementById('clothWidth').value);
+                                
+                                // Get canvas element
+                                const canvas = document.getElementById('patternCanvas');
+                                
+                                // Define image paths for each blouse style
+                                const styleImages = {
+                                    '4dart': {
+                                        front: '/static/images/blouse_patterns/4_Dart_Blouse_front.png',
+                                        back: '/static/images/blouse_patterns/4_Dart_Blouse_back.png',
+                                        sleeve: '/static/images/blouse_patterns/4_Dart_Blouse_sleeve.png',
+                                        collar: '/static/images/blouse_patterns/4_Dart_Blouse_Collar.png'
+                                    },
+                                    'princess_cut': {
+                                        front: '/static/images/blouse_patterns/Princess_Cut_front.png',
+                                        back: '/static/images/blouse_patterns/Princess_Cut_back.png',
+                                        sleeve: '/static/images/blouse_patterns/Princess_Cut_sleeve.png'
+                                    },
+                                    'belt_blouse': {
+                                        front: '/static/images/blouse_patterns/Belt_Blouse,_front.png',
+                                        back: '/static/images/blouse_patterns/Belt_Blouse,_back.png',
+                                        sleeve: '/static/images/blouse_patterns/Belt_Blouse,_sleeve.png',
+                                        belt: '/static/images/blouse_patterns/Belt_Blouse,_belt.png',
+                                        cuff: '/static/images/blouse_patterns/Belt_Blouse,_cuff.png'
+                                    },
+                                    'sabyasachi': {
+                                        front: '/static/images/blouse_patterns/Sabyasachi_Blouse_front.png',
+                                        back: '/static/images/blouse_patterns/Sabyasachi_Blouse_back.png',
+                                        sleeve: '/static/images/blouse_patterns/Sabyasachi_Blouse_sleeve.png'
+                                    }
+                                };
+                                
+                                const images = styleImages[style];
+                                if (!images) {
+                                    console.error('Unknown blouse style:', style);
+                                    return;
                                 }
                                 
-                                const sa = PatternGenerator.inchesToPx(SEAM_ALLOWANCE);
-                                const scale = 0.8; // Scale factor for display
+                                // Clear previous pattern pieces and measurements
+                                PatternGenerator.dragState.pieces = {};
+                                PatternGenerator.dragState.measurements = null;
                                 
-                                // Front pattern
-                                const frontX = 50;
-                                const frontY = 50;
+                                // Load and display images
+                                const loadedImages = {};
+                                let loadedCount = 0;
+                                const totalImages = Object.keys(images).length;
                                 
-                                // Calculate key points
-                                const shoulderWidth = m.across_shoulder / 2;
-                                const neckWidth = shoulderWidth / 5;
-                                const armholeDepth = (m.upper_chest / 6) + PatternGenerator.inchesToPx(2);
-                                const waist = m.length;
-                                const sideSeamTaper = (m.chest - m.waist) / 4;
-                                
-                                // Draw front pattern
-                                ctx.save();
-                                ctx.translate(frontX, frontY);
-                                
-                                // Outline
-                                ctx.beginPath();
-                                // Shoulder line
-                                ctx.moveTo(0, 0);
-                                ctx.lineTo(shoulderWidth, 0);
-                                // Armhole
-                                PatternGenerator.drawArmhole(ctx, 
-                                    shoulderWidth, 0, 
-                                    shoulderWidth + m.chest/4, armholeDepth,
-                                    armholeDepth
-                                );
-                                // Side seam
-                                ctx.lineTo(shoulderWidth + m.chest/4 - sideSeamTaper, waist);
-                                // Waist to center front
-                                ctx.lineTo(0, waist);
-                                // Center front
-                                ctx.lineTo(0, 0);
-                                
-                                // Neckline
-                                PatternGenerator.drawNeckline(ctx, 0, 0, neckWidth, m.front_neck_depth, true);
-                                
-                                // Add darts
-                                const bustDartX = shoulderWidth * 0.4;
-                                const bustDartWidth = PatternGenerator.inchesToPx(1);
-                                const bustDartLength = PatternGenerator.inchesToPx(3.5);
-                                
-                                ctx.beginPath();
-                                ctx.moveTo(bustDartX, m.shoulder_apex);
-                                ctx.lineTo(bustDartX - bustDartWidth/2, m.shoulder_apex + bustDartLength);
-                                ctx.moveTo(bustDartX, m.shoulder_apex);
-                                ctx.lineTo(bustDartX + bustDartWidth/2, m.shoulder_apex + bustDartLength);
-                                ctx.stroke();
-                                
-                                // Add labels and measurements
-                                ctx.fillStyle = '#000';
-                                PatternGenerator.drawText(ctx, 'Front', shoulderWidth/2, -20, { size: 14 });
-                                PatternGenerator.drawMeasurement(ctx, 0, 0, shoulderWidth, 0, `${m.across_shoulder/DPI}"`);
-                                PatternGenerator.drawMeasurement(ctx, 0, 0, 0, waist, `${m.length}"`);
-                                
-                                ctx.restore();
-                                
-                                // Draw back pattern (similar to front with adjustments)
-                                const backX = frontX + shoulderWidth * 1.5;
-                                
-                                ctx.save();
-                                ctx.translate(backX, frontY);
-                                
-                                // Back pattern drawing would go here (similar to front with adjustments)
-                                // ...
-                                
-                                PatternGenerator.drawText(ctx, 'Back (Placeholder)', shoulderWidth/2, -20, { size: 14 });
-                                ctx.restore();
-                                
-                                // Draw sleeve pattern
-                                const sleeveX = frontX;
-                                const sleeveY = frontY + waist + 50;
-                                
-                                ctx.save();
-                                ctx.translate(sleeveX, sleeveY);
-                                
-                                const sleeveCapHeight = (m.armhole / 4) + PatternGenerator.inchesToPx(1.5);
-                                const bicepWidth = m.biceps / 2;
-                                const cuffWidth = m.sleeve_cuff / 2;
-                                
-                                // Sleeve cap curve
-                                ctx.beginPath();
-                                ctx.moveTo(0, 0);
-                                // Sleeve cap curve would be calculated based on armhole measurement
-                                // ...
-                                ctx.lineTo(0, m.sleeve_length);
-                                ctx.stroke();
-                                
-                                PatternGenerator.drawText(ctx, 'Sleeve', bicepWidth/2, -10, { size: 14 });
-                                PatternGenerator.drawMeasurement(ctx, 0, 0, 0, m.sleeve_length, `${m.sleeve_length/DPI}"`);
-                                
-                                ctx.restore();
+                                Object.entries(images).forEach(([part, path]) => {
+                                    const img = new Image();
+                                    img.onload = () => {
+                                        loadedImages[part] = img;
+                                        loadedCount++;
+                                        
+                                        // When all images are loaded, display them
+                                        if (loadedCount === totalImages) {
+                                            // Convert cloth dimensions to pixels (using DPI)
+                                            const clothLengthPx = clothLength * DPI;
+                                            const clothWidthPx = clothWidthInches * DPI;
+                                            
+                                            // Calculate layout based on actual cloth dimensions
+                                            const padding = 20;
+                                            const availableWidth = Math.min(clothWidthPx, clothWidth - padding * 2);
+                                            const availableHeight = Math.min(clothLengthPx, clothHeight - padding * 2);
+                                            
+                                            // Calculate maximum size for each pattern piece
+                                            const maxPieceWidth = (availableWidth - padding) / 2;
+                                            const maxPieceHeight = (availableHeight - padding) / 2;
+                                            
+                                            let x = padding;
+                                            let y = padding;
+                                            
+                                            // Store pattern pieces for dragging
+                                            const patternPieces = {};
+                                            
+                                            // Display front pattern
+                                            if (loadedImages.front) {
+                                                const scale = Math.min(maxPieceWidth / loadedImages.front.width, maxPieceHeight / loadedImages.front.height, 1);
+                                                const pieceWidth = loadedImages.front.width * scale;
+                                                const pieceHeight = loadedImages.front.height * scale;
+                                                
+                                                // Create draggable piece
+                                                const frontPiece = PatternGenerator.makeDraggable(
+                                                    canvas,
+                                                    'front',
+                                                    x,
+                                                    y,
+                                                    pieceWidth,
+                                                    pieceHeight,
+                                                    loadedImages.front
+                                                );
+                                                patternPieces.front = frontPiece;
+                                                ctx.drawImage(loadedImages.front, x, y, pieceWidth, pieceHeight);
+                                                
+                                                // Add label for front piece
+                                                ctx.save();
+                                                ctx.fillStyle = '#000';
+                                                ctx.font = '14px Arial';
+                                                ctx.textAlign = 'center';
+                                                ctx.fillText('Front', x + pieceWidth/2, y + pieceHeight + 20);
+                                                ctx.restore();
+                                                
+                                                // Add measurement arrows for front piece
+                                                PatternGenerator.drawBlouseMeasurements(ctx, measurements, 'front', x, y, pieceWidth, pieceHeight);
+                                                
+                                                x += maxPieceWidth + padding;
+                                            }
+                                            
+                                            // Display back pattern
+                                            if (loadedImages.back) {
+                                                const scale = Math.min(maxPieceWidth / loadedImages.back.width, maxPieceHeight / loadedImages.back.height, 1);
+                                                const pieceWidth = loadedImages.back.width * scale;
+                                                const pieceHeight = loadedImages.back.height * scale;
+                                                
+                                                // Create draggable piece
+                                                const backPiece = PatternGenerator.makeDraggable(
+                                                    canvas,
+                                                    'back',
+                                                    x,
+                                                    y,
+                                                    pieceWidth,
+                                                    pieceHeight,
+                                                    loadedImages.back
+                                                );
+                                                patternPieces.back = backPiece;
+                                                ctx.drawImage(loadedImages.back, x, y, pieceWidth, pieceHeight);
+                                                
+                                                // Add label for back piece
+                                                ctx.save();
+                                                ctx.fillStyle = '#000';
+                                                ctx.font = '14px Arial';
+                                                ctx.textAlign = 'center';
+                                                ctx.fillText('Back', x + pieceWidth/2, y + pieceHeight + 20);
+                                                ctx.restore();
+                                                
+                                                // Add measurement arrows for back piece
+                                                PatternGenerator.drawBlouseMeasurements(ctx, measurements, 'back', x, y, pieceWidth, pieceHeight);
+                                                
+                                                x = padding;
+                                                y += maxPieceHeight + padding;
+                                            }
+                                            
+                                            // Display sleeve pattern
+                                            if (loadedImages.sleeve) {
+                                                const scale = Math.min(maxPieceWidth / loadedImages.sleeve.width, maxPieceHeight / loadedImages.sleeve.height, 1);
+                                                const pieceWidth = loadedImages.sleeve.width * scale;
+                                                const pieceHeight = loadedImages.sleeve.height * scale;
+                                                
+                                                // Create draggable piece
+                                                const sleevePiece = PatternGenerator.makeDraggable(
+                                                    canvas,
+                                                    'sleeve',
+                                                    x,
+                                                    y,
+                                                    pieceWidth,
+                                                    pieceHeight,
+                                                    loadedImages.sleeve
+                                                );
+                                                patternPieces.sleeve = sleevePiece;
+                                                ctx.drawImage(loadedImages.sleeve, x, y, pieceWidth, pieceHeight);
+                                                
+                                                // Add label for sleeve piece
+                                                ctx.save();
+                                                ctx.fillStyle = '#000';
+                                                ctx.font = '14px Arial';
+                                                ctx.textAlign = 'center';
+                                                ctx.fillText('Sleeve', x + pieceWidth/2, y + pieceHeight + 20);
+                                                ctx.restore();
+                                                
+                                                // Add measurement arrows for sleeve piece
+                                                PatternGenerator.drawBlouseMeasurements(ctx, measurements, 'sleeve', x, y, pieceWidth, pieceHeight);
+                                                
+                                                x += maxPieceWidth + padding;
+                                            }
+                                            
+                                            // Display additional parts (collar, belt, cuff) if available
+                                            ['collar', 'belt', 'cuff'].forEach(part => {
+                                                if (loadedImages[part]) {
+                                                    const scale = Math.min(maxPieceWidth / loadedImages[part].width, maxPieceHeight / loadedImages[part].height, 0.8);
+                                                    const pieceWidth = loadedImages[part].width * scale;
+                                                    const pieceHeight = loadedImages[part].height * scale;
+                                                    
+                                                    // Create draggable piece
+                                                    const partPiece = PatternGenerator.makeDraggable(
+                                                        canvas,
+                                                        part,
+                                                        x,
+                                                        y,
+                                                        pieceWidth,
+                                                        pieceHeight,
+                                                        loadedImages[part]
+                                                    );
+                                                    patternPieces[part] = partPiece;
+                                                    ctx.drawImage(loadedImages[part], x, y, pieceWidth, pieceHeight);
+                                                    
+                                                    // Add label for additional parts
+                                                    ctx.save();
+                                                    ctx.fillStyle = '#000';
+                                                    ctx.font = '14px Arial';
+                                                    ctx.textAlign = 'center';
+                                                    ctx.fillText(part.charAt(0).toUpperCase() + part.slice(1), x + pieceWidth/2, y + pieceHeight + 20);
+                                                    ctx.restore();
+                                                    
+                                                    // Add measurement arrows for this piece
+                                                    PatternGenerator.drawBlouseMeasurements(ctx, measurements, part, x, y, pieceWidth, pieceHeight);
+                                                    
+                                                    x += maxPieceWidth + padding;
+                                                    if (x > availableWidth - maxPieceWidth) {
+                                                        x = padding;
+                                                        y += maxPieceHeight + padding;
+                                                    }
+                                                }
+                                            });
+                                            
+                                            // Store measurements for drag operations
+                                            PatternGenerator.dragState.measurements = measurements;
+                                            
+                                            // Initialize global drag handlers after all pieces are created
+                                            PatternGenerator.initializeGlobalDragHandlers(canvas);
+                                        }
+                                    };
+                                    img.onerror = () => {
+                                        console.error('Failed to load image:', path);
+                                        loadedCount++;
+                                        if (loadedCount === totalImages) {
+                                            // Display error message if no images loaded
+                                            ctx.fillStyle = '#666';
+                                            ctx.font = '16px Arial';
+                                            ctx.textAlign = 'center';
+                                            ctx.fillText('Pattern images not available', clothWidth / 2, clothHeight / 2);
+                                        }
+                                    };
+                                    img.src = path;
+                                });
                             },
                             
                             // Store loaded images
@@ -1381,6 +1723,7 @@
                             
                             // Get input values
                             const category = document.getElementById('garmentCategory').value;
+                            const blouseStyle = category.toLowerCase() === 'blouse' ? document.getElementById('blouseStyle').value : null;
                             const clothLength = parseFloat(document.getElementById('clothLength').value);
                             const clothWidth = parseFloat(document.getElementById('clothWidth').value);
                             
@@ -1430,7 +1773,13 @@
                             
                             // Call the appropriate pattern generation function based on category
                             try {
-                                if (category.toLowerCase() === 'lehenga') {
+                                if (category.toLowerCase() === 'blouse') {
+                                    // For blouse, get the selected style
+                                    const style = document.getElementById('blouseStyle').value;
+                                    // Add the style to the measurements for the generator to use
+                                    measurements.style = style;
+                                    PatternGenerator.generateBlouse(ctx, measurements, canvasWidth, canvasHeight);
+                                } else if (category.toLowerCase() === 'lehenga') {
                                     // For lehenga, draw directly on the grid canvas without additional transforms
                                     ctx.save();
                                     PatternGenerator.generateLehenga(ctx, measurements, canvasWidth, canvasHeight);
