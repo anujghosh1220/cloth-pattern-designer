@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/customer-measurements.css') }}">
 <!-- jsPDF library for PDF generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script>
     // Make jsPDF available in global scope
     window.jsPDF = window.jspdf.jsPDF;
@@ -497,156 +497,152 @@
         document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
         
         // Handle view measurement button click
-        document.querySelectorAll('.view-measurement').forEach(button => {
-            button.addEventListener('click', function() {
-                const measurementId = this.getAttribute('data-id');
-                fetch(`/measurement/${measurementId}/json`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const detailsDiv = document.getElementById('measurementDetails');
-                        let html = `
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h5>${data.customer_name} - ${data.category.charAt(0).toUpperCase() + data.category.slice(1)}</h5>
-                                </div>
-                                <div class="text-end">
-                                    <h5 class="text-primary">Total: ₹${data.customer_amount ? parseFloat(data.customer_amount).toFixed(2) : '0.00'}</h5>
-                                    ${data.advance_amount ? `<div class="text-success">Advance: ₹${parseFloat(data.advance_amount).toFixed(2)}</div>` : ''}
-                                    ${data.customer_amount ? `<div class="fw-bold">Amount Due: ₹${(parseFloat(data.customer_amount) - (parseFloat(data.advance_amount) || 0)).toFixed(2)}</div>` : ''}
-                                </div>
+        document.addEventListener('click', function(e) {
+            const trigger = e.target.closest('.view-measurement');
+            if (!trigger) return;
+            const measurementId = trigger.getAttribute('data-id');
+            fetch(`/measurement/${measurementId}/json`)
+                .then(response => response.json())
+                .then(data => {
+                    const detailsDiv = document.getElementById('measurementDetails');
+                    let html = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5>${data.customer_name} - ${data.category.charAt(0).toUpperCase() + data.category.slice(1)}</h5>
                             </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-12 mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0">Measurement Details</h5>
-                                        <button class="btn btn-sm btn-outline-primary edit-notes" data-id="${data.id}" data-notes="${data.notes || ''}">
-                                            <i class="bi bi-pencil-square"></i> Edit Notes
-                                        </button>
-                                    </div>
-                                    <hr class="mt-2">
+                            <div class="text-end">
+                                <h5 class="text-primary">Total: ₹${data.customer_amount ? parseFloat(data.customer_amount).toFixed(2) : '0.00'}</h5>
+                                ${data.advance_amount ? `<div class=\"text-success\">Advance: ₹${parseFloat(data.advance_amount).toFixed(2)}</div>` : ''}
+                                ${data.customer_amount ? `<div class=\"fw-bold\">Amount Due: ₹${(parseFloat(data.customer_amount) - (parseFloat(data.advance_amount) || 0)).toFixed(2)}</div>` : ''}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Measurement Details</h5>
+                                    <button class="btn btn-sm btn-outline-primary edit-notes" data-id="${data.id}" data-notes="${data.notes || ''}">
+                                        <i class="bi bi-pencil-square"></i> Edit Notes
+                                    </button>
                                 </div>
-                                <div class="col-md-7">
-                                    <div class="d-flex flex-column gap-2">
+                                <hr class="mt-2">
+                            </div>
+                            <div class="col-md-7">
+                                <div class="d-flex flex-column gap-2">
+                    `;
+                    
+                    const measurementOrder = [
+                        'length', 'across_shoulder', 'upper_chest', 'chest', 'waist',
+                        'front_neck_depth', 'back_neck_depth', 'sleeve_length', 'armhole',
+                        'biceps', 'sleeve_cuff', 'shoulder_apex', 'hip', 'waist_floor',
+                        'belt', 'waist_ankle', 'thigh', 'ankle'
+                    ];
+                    
+                    measurementOrder.forEach(key => {
+                        if (data.measurements[key] !== undefined && data.measurements[key] !== null) {
+                            const label = formatLabel(key);
+                            html += `
+                                <div class="d-flex justify-content-between border-bottom pb-2">
+                                    <div class="w-100 d-flex justify-content-between">
+                                        <span class="fw-bold">${label}:</span>
+                                        <span>${data.measurements[key]}"</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    if (data.order_date || data.delivery_date) {
+                        html += `
+                            <div class="mt-4 pt-2 border-top">
+                                <h6 class="text-muted mb-3">Order Information</h6>
                         `;
                         
-                        // Add measurement fields in a consistent order
-                        const measurementOrder = [
-                            'length', 'across_shoulder', 'upper_chest', 'chest', 'waist',
-                            'front_neck_depth', 'back_neck_depth', 'sleeve_length', 'armhole',
-                            'biceps', 'sleeve_cuff', 'shoulder_apex', 'hip', 'waist_floor',
-                            'belt', 'waist_ankle', 'thigh', 'ankle'
-                        ];
-                        
-                        // Add measurement fields
-                        measurementOrder.forEach(key => {
-                            if (data.measurements[key] !== undefined && data.measurements[key] !== null) {
-                                const label = formatLabel(key);
-                                html += `
-                                    <div class="d-flex justify-content-between border-bottom pb-2">
-                                        <div class="w-100 d-flex justify-content-between">
-                                            <span class="fw-bold">${label}:</span>
-                                            <span>${data.measurements[key]}"</span>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        });
-                        
-                        // Add a separator before dates
-                        if (data.order_date || data.delivery_date) {
+                        if (data.order_date) {
+                            const orderDate = new Date(data.order_date).toLocaleDateString('en-IN', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric',
+                                weekday: 'short'
+                            });
                             html += `
-                                <div class="mt-4 pt-2 border-top">
-                                    <h6 class="text-muted mb-3">Order Information</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Ordered On</span>
+                                    <span class="fw-medium">${orderDate}</span>
+                                </div>
                             `;
-                            
-                            if (data.order_date) {
-                                const orderDate = new Date(data.order_date).toLocaleDateString('en-IN', { 
-                                    year: 'numeric', 
-                                    month: 'short', 
-                                    day: 'numeric',
-                                    weekday: 'short'
-                                });
-                                html += `
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="text-muted">Ordered On</span>
-                                        <span class="fw-medium">${orderDate}</span>
-                                    </div>
-                                `;
-                            }
-                            
-                            if (data.delivery_date) {
-                                const deliveryDate = new Date(data.delivery_date).toLocaleDateString('en-IN', { 
-                                    year: 'numeric', 
-                                    month: 'short', 
-                                    day: 'numeric',
-                                    weekday: 'short'
-                                });
-                                html += `
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted">Delivery By</span>
-                                        <span class="fw-medium">${deliveryDate}</span>
-                                    </div>
-                                `;
-                            }
-                            
-                            html += `</div>`; // Close the order info section
                         }
                         
-                        html += `
-                                    </div>
+                        if (data.delivery_date) {
+                            const deliveryDate = new Date(data.delivery_date).toLocaleDateString('en-IN', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric',
+                                weekday: 'short'
+                            });
+                            html += `
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Delivery By</span>
+                                    <span class="fw-medium">${deliveryDate}</span>
                                 </div>
-                                <div class="col-md-5">
-                                    ${data.image_url ? `
-                                        <div class="text-center">
-                                            <img src="${data.image_url}" class="img-fluid rounded" style="max-height: 150px; width: auto;" alt="Measurement reference image">
-                                        </div>
-                                    ` : '<p class="text-muted">No image uploaded</p>'}
-                                    
-                                    <div class="mt-4">
-                                        <h6>Notes:</h6>
-                                        <div class="border rounded p-3 bg-light">
-                                            ${data.notes ? data.notes.replace(/\n/g, '<br>') : '<span class="text-muted">No notes added</span>'}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mt-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h6 class="mb-0">Audio Notes</h6>
-                                            <button class="btn btn-sm btn-outline-info record-audio" data-id="${data.id}" data-audio-url="${data.audio_url || ''}">
-                                                <i class="bi bi-mic"></i> ${data.audio_url ? 'Update' : 'Add'} Audio
-                                            </button>
-                                        </div>
-                                        ${data.audio_url ? `
-                                            <div class="border rounded p-3 bg-light">
-                                                <audio controls class="w-100">
-                                                    <source src="${data.audio_url}" type="audio/wav">
-                                                    Your browser does not support the audio element.
-                                                </audio>
-                                                <div class="text-muted small mt-2">
-                                                    <i class="bi bi-info-circle"></i> Click play to listen to the audio notes.
-                                                </div>
-                                            </div>
-                                        ` : `
-                                            <div class="border rounded p-3 bg-light text-muted">
-                                                <i class="bi bi-mic-mute"></i> No audio recorded yet.
-                                            </div>
-                                        `}
-                                    </div>
+                            `;
+                        }
+                        
+                        html += `</div>`;
+                    }
+                    
+                    html += `
                                 </div>
                             </div>
-                        `;
-                        detailsDiv.innerHTML = html;
-                        
-                        // Show the modal
-                        const modal = new bootstrap.Modal(document.getElementById('measurementModal'));
-                        modal.show();
-                    })
-                    .catch(error => {
-                        console.error('Error loading measurement details:', error);
-                        alert('Error loading measurement details. Please try again.');
-                    });
-            });
+                            <div class="col-md-5">
+                                ${data.image_url ? `
+                                    <div class="text-center">
+                                        <img src="${data.image_url}" class="img-fluid rounded" style="max-height: 150px; width: auto;" alt="Measurement reference image">
+                                    </div>
+                                ` : '<p class="text-muted">No image uploaded</p>'}
+                                
+                                <div class="mt-4">
+                                    <h6>Notes:</h6>
+                                    <div class="border rounded p-3 bg-light">
+                                        ${data.notes ? data.notes.replace(/\n/g, '<br>') : '<span class="text-muted">No notes added</span>'}
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Audio Notes</h6>
+                                        <button class="btn btn-sm btn-outline-info record-audio" data-id="${data.id}" data-audio-url="${data.audio_url || ''}">
+                                            <i class="bi bi-mic"></i> ${data.audio_url ? 'Update' : 'Add'} Audio
+                                        </button>
+                                    </div>
+                                    ${data.audio_url ? `
+                                        <div class="border rounded p-3 bg-light">
+                                            <audio controls class="w-100">
+                                                <source src="${data.audio_url}" type="audio/wav">
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                            <div class="text-muted small mt-2">
+                                                <i class="bi bi-info-circle"></i> Click play to listen to the audio notes.
+                                            </div>
+                                        </div>
+                                    ` : `
+                                        <div class="border rounded p-3 bg-light text-muted">
+                                            <i class="bi bi-mic-mute"></i> No audio recorded yet.
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    detailsDiv.innerHTML = html;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('measurementModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error loading measurement details:', error);
+                    alert('Error loading measurement details. Please try again.');
+                });
         });
         
         // Search functionality
@@ -694,7 +690,6 @@
                         const tableBody = document.querySelector('table tbody');
                         tableBody.innerHTML = data.html;
                         // Re-initialize any event listeners if needed
-                        initializeEventListeners();
                     }
                 })
                 .catch(error => console.error('Error:', error));
@@ -806,21 +801,20 @@
                 }
                     
                     // Add logo on the right side
-                    const img = new Image();
-                    img.src = "{{ url_for('static', filename='images/9_12_2025 7_10_57 PM.png') }}";
+                    const logoImg = new Image();
+                    logoImg.src = "{{ url_for('static', filename='images/9_12_2025 7_10_57 PM.png') }}";
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const logoWidth = 50;
                     const logoHeight = 20;
                     const margin = 14; // Same as left margin for consistency
                     const centerX = pageWidth / 2;
                     
-                    doc.addImage({
-                        imageData: img,
-                        x: pageWidth - logoWidth - margin,
-                        y: 10,
-                        width: logoWidth,
-                        height: logoHeight
-                    });
+                    // Add logo image (best-effort; will just skip if not yet loaded)
+                    try {
+                        doc.addImage(logoImg, 'PNG', pageWidth - logoWidth - margin, 10, logoWidth, logoHeight);
+                    } catch (e) {
+                        console.warn('Logo image not ready, skipping.');
+                    }
                     
                     // Add customer info
                     
@@ -893,8 +887,6 @@
                     }
                     
                     // Set up two-column layout
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const margin = 14;
                     const colWidth = (pageWidth - (3 * margin)) / 2; // Two columns with margin in between
                     
                     // Left Column: Measurements Table
@@ -954,24 +946,24 @@
                     
                     // Add image if available
                     if (data.image_url) {
-                        const img = new Image();
-                        img.src = data.image_url;
+                        const clothImg = new Image();
+                        clothImg.src = data.image_url;
                         
-                        img.onload = function() {
+                        clothImg.onload = function() {
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d', { willReadFrequently: true });
                             
                             // Set maximum dimensions for the right column
                             const maxImgWidth = colWidth - 5;
-                            const ratio = Math.min(maxImgWidth / img.width, 1);
+                            const ratio = Math.min(maxImgWidth / clothImg.width, 1);
                             
-                            canvas.width = img.width * ratio;
-                            canvas.height = img.height * ratio;
+                            canvas.width = clothImg.width * ratio;
+                            canvas.height = clothImg.height * ratio;
                             
                             // Draw image with quality settings
                             ctx.imageSmoothingEnabled = true;
                             ctx.imageSmoothingQuality = 'high';
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(clothImg, 0, 0, canvas.width, canvas.height);
                             
                             const imgData = canvas.toDataURL('image/jpeg', 0.9);
                             
@@ -981,14 +973,7 @@
                             doc.text('Cloth Image', rightColX, rightColY);
                             rightColY += 5;
                             
-                            doc.addImage({
-                                imageData: imgData,
-                                x: rightColX,
-                                y: rightColY,
-                                width: Math.min(canvas.width, maxImgWidth),
-                                height: Math.min(canvas.height, 100), // Limit height to 100mm
-                                compression: 'FAST'
-                            });
+                            doc.addImage(imgData, 'JPEG', rightColX, rightColY, Math.min(canvas.width, maxImgWidth), Math.min(canvas.height, 100), undefined, 'FAST');
                             
                             rightColY += Math.min(canvas.height, 100) + 5;
                             
@@ -1025,26 +1010,6 @@
                         }
                         
                         // Save the PDF
-                        doc.save(`Measurement_${data.customer_name.replace(/\s+/g, '_')}_${data.category}.pdf`);
-                        
-                        // Reset button state
-                        button.disabled = false;
-                        button.innerHTML = originalHtml;
-                    }
-                                width: imgWidth,
-                                height: imgHeight,
-                                compression: 'NONE'
-                            });
-                            
-                            // Save the PDF
-                            doc.save(`Measurement_${data.customer_name.replace(/\s+/g, '_')}_${data.category}.pdf`);
-                            
-                            // Reset button state
-                            button.disabled = false;
-                            button.innerHTML = originalHtml;
-                        };
-                    } else {
-                        // Save the PDF if no image
                         doc.save(`Measurement_${data.customer_name.replace(/\s+/g, '_')}_${data.category}.pdf`);
                         
                         // Reset button state
