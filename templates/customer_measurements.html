@@ -787,15 +787,12 @@
                     });
             })
             .then(data => {
-                // Initialize jsPDF
                 let doc;
                 if (typeof window.jspdf !== 'undefined') {
-                    // UMD version
                     const { jsPDF } = window.jspdf;
-                    doc = new jsPDF();
+                    doc = new jsPDF({ unit: 'mm', format: 'a4' });
                 } else if (typeof jsPDF !== 'undefined') {
-                    // Standard version
-                    doc = new jsPDF();
+                    doc = new jsPDF({ unit: 'mm', format: 'a4' });
                 } else {
                     throw new Error('Failed to initialize jsPDF');
                 }
@@ -952,30 +949,38 @@
                         clothImg.onload = function() {
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                            const pxToMm = (px) => px * 0.264583;
+                            const mmToPx = (mm) => mm / 0.264583;
+                            const pageHeight = doc.internal.pageSize.getHeight();
+                            const maxImgWidthMm = Math.max(10, colWidth - 5);
+                            const maxImgWidthPx = mmToPx(maxImgWidthMm);
+                            const ratioPx = Math.min(maxImgWidthPx / clothImg.width, 1);
+                            const scale = 2;
+                            canvas.width = Math.floor(clothImg.width * ratioPx * scale);
+                            canvas.height = Math.floor(clothImg.height * ratioPx * scale);
                             
-                            // Set maximum dimensions for the right column
-                            const maxImgWidth = colWidth - 5;
-                            const ratio = Math.min(maxImgWidth / clothImg.width, 1);
-                            
-                            canvas.width = clothImg.width * ratio;
-                            canvas.height = clothImg.height * ratio;
-                            
-                            // Draw image with quality settings
                             ctx.imageSmoothingEnabled = true;
                             ctx.imageSmoothingQuality = 'high';
                             ctx.drawImage(clothImg, 0, 0, canvas.width, canvas.height);
                             
-                            const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                            const imgData = canvas.toDataURL('image/png');
                             
-                            // Add image to PDF
+                            let renderWidthMm = Math.min(pxToMm(canvas.width), maxImgWidthMm);
+                            let renderHeightMm = renderWidthMm * (canvas.height / canvas.width);
+                            const remainingHeightMm = Math.max(10, pageHeight - rightColY - 10);
+                            if (renderHeightMm > remainingHeightMm) {
+                                renderHeightMm = remainingHeightMm;
+                                renderWidthMm = renderHeightMm * (canvas.width / canvas.height);
+                            }
+                            
                             doc.setFontSize(10);
                             doc.setFont(undefined, 'bold');
                             doc.text('Cloth Image', rightColX, rightColY);
                             rightColY += 5;
                             
-                            doc.addImage(imgData, 'JPEG', rightColX, rightColY, Math.min(canvas.width, maxImgWidth), Math.min(canvas.height, 100), undefined, 'FAST');
+                            doc.addImage(imgData, 'PNG', rightColX, rightColY, renderWidthMm, renderHeightMm, undefined, 'SLOW');
                             
-                            rightColY += Math.min(canvas.height, 100) + 5;
+                            rightColY += renderHeightMm + 5;
                             
                             // Add notes below the image if they exist
                             if (data.notes) {
