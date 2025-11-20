@@ -31,28 +31,45 @@ app = create_app()
 def init_db():
     with app.app_context():
         # Create uploads directory if it doesn't exist
-        os.makedirs(os.path.join('static', 'uploads', 'samples'), exist_ok=True)
-        os.makedirs(os.path.join('static', 'uploads', 'measurements'), exist_ok=True)
-        os.makedirs(os.path.join('static', 'uploads', 'audio'), exist_ok=True)
+        upload_dirs = [
+            os.path.join('static', 'uploads', 'samples'),
+            os.path.join('static', 'uploads', 'measurements'),
+            os.path.join('static', 'uploads', 'audio'),
+            app.instance_path
+        ]
+        
+        for dir_path in upload_dirs:
+            os.makedirs(dir_path, exist_ok=True)
+        
+        # Set the database path to be in the instance folder
+        db_path = os.path.join(app.instance_path, 'cloth.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.abspath(db_path)}'
         
         # Create all tables if they don't exist
         db.create_all()
         
         # Verify tables were created
         inspector = db.inspect(db.engine)
+        print("Database path:", os.path.abspath(db_path))
         print("Tables in database:", inspector.get_table_names())
         
         # Verify customer table columns
         if 'customer' in inspector.get_table_names():
             print("Customer table columns:", [col['name'] for col in inspector.get_columns('customer')])
         
-        # Create admin user if not exists
-        if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin')
-            admin.set_password('admin2214')
-            db.session.add(admin)
-            db.session.commit()
-            print("Created admin user")
+        # Check if this is a new database by looking for the admin user
+        admin_exists = User.query.filter_by(username='admin').first()
+        
+        if not admin_exists:
+            try:
+                admin = User(username='admin')
+                admin.set_password('admin2214')
+                db.session.add(admin)
+                db.session.commit()
+                print("Created admin user")
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error creating admin user: {e}")
         else:
             print("Admin user already exists")
 
@@ -1323,7 +1340,14 @@ def get_audio(filename):
 
 if __name__ == '__main__':
     with app.app_context():
-        # Create the audio directory if it doesn't exist
-        os.makedirs(os.path.join('static', 'uploads', 'audio'), exist_ok=True)
-    init_db()
-    app.run(debug=True)
+        # Initialize the database
+        init_db()
+    
+    # Ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError as e:
+        print(f"Error creating instance folder: {e}")
+    
+    # Start the application
+    app.run(debug=True, host='0.0.0.0', port=5000)
