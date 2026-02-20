@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python-build/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Node modules and build files
+node_modules/
+dist/
+build/
+*.exe
+*.pkg
+*.asar
+
+# Electron and app distribution
+dist/
+build/
+ClothPatternDesigner/
+DrapingThreads*.exe
+Draping Threads*.exe
+*.zip
+
+# Uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Migration files
+migrations/versions/*.pyc
+
+# Large files to be excluded from git
+*.db.backup
+*.backup
+*.bak
+*.tmp
