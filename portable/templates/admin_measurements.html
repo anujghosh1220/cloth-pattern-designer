@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Measurements{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>All Measurements</h2>
+    <div class="mb-3">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Back to Users</a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>Measurements</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for measurement, username in measurements %}
+                <tr>
+                    <td>{{ measurement.id }}</td>
+                    <td>{{ username }}</td>
+                    <td>{{ measurement.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#measurement-{{ measurement.id }}" aria-expanded="false">
+                            View Details
+                        </button>
+                        <div class="collapse" id="measurement-{{ measurement.id }}">
+                            <div class="card card-body mt-2">
+                                <dl class="row">
+                                    <dt class="col-sm-4">Cloth Length</dt>
+                                    <dd class="col-sm-8">{{ measurement.cloth_length }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Cloth Width</dt>
+                                    <dd class="col-sm-8">{{ measurement.cloth_width }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Back Length</dt>
+                                    <dd class="col-sm-8">{{ measurement.back_length }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Front Length</dt>
+                                    <dd class="col-sm-8">{{ measurement.front_length }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Waist</dt>
+                                    <dd class="col-sm-8">{{ measurement.waist }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Shoulder</dt>
+                                    <dd class="col-sm-8">{{ measurement.shoulder }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Bust</dt>
+                                    <dd class="col-sm-8">{{ measurement.bust }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Back Neck Depth</dt>
+                                    <dd class="col-sm-8">{{ measurement.back_neck_depth }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Front Neck Depth</dt>
+                                    <dd class="col-sm-8">{{ measurement.front_neck_depth }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Apex to Apex</dt>
+                                    <dd class="col-sm-8">{{ measurement.apex_to_apex }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Shoulder to Bust</dt>
+                                    <dd class="col-sm-8">{{ measurement.shoulder_to_bust }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Sleeve Length</dt>
+                                    <dd class="col-sm-8">{{ measurement.sleeve_length }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Sleeve Top</dt>
+                                    <dd class="col-sm-8">{{ measurement.sleeve_top }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Sleeve Bottom</dt>
+                                    <dd class="col-sm-8">{{ measurement.sleeve_bottom }} in</dd>
+                                    
+                                    <dt class="col-sm-4">Waistband Height</dt>
+                                    <dd class="col-sm-8">{{ measurement.waistband_height }} in</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-measurement" 
+                                data-id="{{ measurement.id }}">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">No measurements found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this measurement? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    let measurementIdToDelete = null;
+    
+    // Set up delete button click handler
+    $('.delete-measurement').click(function() {
+        measurementIdToDelete = $(this).data('id');
+        $('#deleteModal').modal('show');
+    });
+    
+    // Handle actual deletion
+    $('#confirmDelete').click(function() {
+        if (!measurementIdToDelete) return;
+        
+        $.ajax({
+            url: `/admin/measurement/${measurementIdToDelete}/delete`,
+            method: 'POST',
+            success: function(response) {
+                if (response.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete measurement');
+                }
+            },
+            error: function() {
+                alert('Error deleting measurement');
+            }
+        });
+        
+        $('#deleteModal').modal('hide');
+    });
+    
+    // Reset the ID when modal is hidden
+    $('#deleteModal').on('hidden.bs.modal', function() {
+        measurementIdToDelete = null;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Your Measurements - {{ measurement.customer_obj.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 40px auto;
+            max-width: 800px;
+            padding: 40px;
+        }
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .measurement-field {
+            margin-bottom: 25px;
+        }
+        .measurement-field label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .measurement-input {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .measurement-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .current-value {
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .category-badge {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .success-message {
+            display: none;
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .error-message {
+            display: none;
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="header-section">
+                <h2 class="mb-3">
+                    <i class="bi bi-rulers text-primary"></i>
+                    Update Your Measurements
+                </h2>
+                <p class="text-muted mb-2">Customer: <strong>{{ measurement.customer_obj.name }}</strong></p>
+                <div class="category-badge">
+                    <i class="bi bi-tag"></i>
+                    {{ measurement.category|title }}
+                </div>
+            </div>
+
+            <div class="instructions">
+                <i class="bi bi-info-circle"></i>
+                <strong>Instructions:</strong> Please review your current measurements and update them as needed. All measurements should be in inches. Click "Update Measurements" when you're finished.
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <i class="bi bi-check-circle"></i>
+                <strong>Success!</strong> Your measurements have been updated successfully.
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="bi bi-exclamation-circle"></i>
+                <strong>Error:</strong> <span id="errorText"></span>
+            </div>
+
+            <form id="measurementForm">
+                <input type="hidden" name="token" value="{{ token }}">
+                
+                {% if measurement.category.lower() == 'lehenga' %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="hip">
+                                    <i class="bi bi-rulers"></i> Hip
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="hip" 
+                                       name="hip" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.hip or '' }}"
+                                       placeholder="Enter hip measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.hip or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="waist_floor">
+                                    <i class="bi bi-rulers"></i> Waist to Floor
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="waist_floor" 
+                                       name="waist_floor" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.waist_floor or '' }}"
+                                       placeholder="Enter waist to floor measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.waist_floor or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="belt">
+                                    <i class="bi bi-rulers"></i> Belt
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="belt" 
+                                       name="belt" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.belt or '' }}"
+                                       placeholder="Enter belt measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.belt or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% elif measurement.category.lower() == 'blouse' %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="length">
+                                    <i class="bi bi-rulers"></i> Length
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="length" 
+                                       name="length" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.length or '' }}"
+                                       placeholder="Enter length measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.length or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="chest">
+                                    <i class="bi bi-rulers"></i> Chest
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="chest" 
+                                       name="chest" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.chest or '' }}"
+                                       placeholder="Enter chest measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.chest or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="waist">
+                                    <i class="bi bi-rulers"></i> Waist
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="waist" 
+                                       name="waist" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.waist or '' }}"
+                                       placeholder="Enter waist measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.waist or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="front_neck_depth">
+                                    <i class="bi bi-rulers"></i> Front Neck Depth
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="front_neck_depth" 
+                                       name="front_neck_depth" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.front_neck_depth or '' }}"
+                                       placeholder="Enter front neck depth">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.front_neck_depth or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="back_neck_depth">
+                                    <i class="bi bi-rulers"></i> Back Neck Depth
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="back_neck_depth" 
+                                       name="back_neck_depth" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.back_neck_depth or '' }}"
+                                       placeholder="Enter back neck depth">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.back_neck_depth or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="sleeve_length">
+                                    <i class="bi bi-rulers"></i> Sleeve Length
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="sleeve_length" 
+                                       name="sleeve_length" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.sleeve_length or '' }}"
+                                       placeholder="Enter sleeve length">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.sleeve_length or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="armhole">
+                                    <i class="bi bi-rulers"></i> Armhole
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="armhole" 
+                                       name="armhole" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.armhole or '' }}"
+                                       placeholder="Enter armhole measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.armhole or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="biceps">
+                                    <i class="bi bi-rulers"></i> Biceps
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="biceps" 
+                                       name="biceps" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.biceps or '' }}"
+                                       placeholder="Enter biceps measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.biceps or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="sleeve_cuff">
+                                    <i class="bi bi-rulers"></i> Sleeve Cuff
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="sleeve_cuff" 
+                                       name="sleeve_cuff" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.sleeve_cuff or '' }}"
+                                       placeholder="Enter sleeve cuff measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.sleeve_cuff or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="shoulder_apex">
+                                    <i class="bi bi-rulers"></i> Shoulder Apex
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="shoulder_apex" 
+                                       name="shoulder_apex" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.shoulder_apex or '' }}"
+                                       placeholder="Enter shoulder apex measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.shoulder_apex or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% elif measurement.category.lower() == 'kurti' %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="length">
+                                    <i class="bi bi-rulers"></i> Length
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="length" 
+                                       name="length" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.length or '' }}"
+                                       placeholder="Enter length measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.length or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="chest">
+                                    <i class="bi bi-rulers"></i> Chest
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="chest" 
+                                       name="chest" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.chest or '' }}"
+                                       placeholder="Enter chest measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.chest or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="waist">
+                                    <i class="bi bi-rulers"></i> Waist
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="waist" 
+                                       name="waist" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.waist or '' }}"
+                                       placeholder="Enter waist measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.waist or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="front_neck_depth">
+                                    <i class="bi bi-rulers"></i> Front Neck Depth
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="front_neck_depth" 
+                                       name="front_neck_depth" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.front_neck_depth or '' }}"
+                                       placeholder="Enter front neck depth">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.front_neck_depth or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="back_neck_depth">
+                                    <i class="bi bi-rulers"></i> Back Neck Depth
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="back_neck_depth" 
+                                       name="back_neck_depth" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.back_neck_depth or '' }}"
+                                       placeholder="Enter back neck depth">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.back_neck_depth or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="sleeve_length">
+                                    <i class="bi bi-rulers"></i> Sleeve Length
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="sleeve_length" 
+                                       name="sleeve_length" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.sleeve_length or '' }}"
+                                       placeholder="Enter sleeve length">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.sleeve_length or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="armhole">
+                                    <i class="bi bi-rulers"></i> Armhole
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="armhole" 
+                                       name="armhole" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.armhole or '' }}"
+                                       placeholder="Enter armhole measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.armhole or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="biceps">
+                                    <i class="bi bi-rulers"></i> Biceps
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="biceps" 
+                                       name="biceps" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.biceps or '' }}"
+                                       placeholder="Enter biceps measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.biceps or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="measurement-field">
+                                <label for="sleeve_cuff">
+                                    <i class="bi bi-rulers"></i> Sleeve Cuff
+                                </label>
+                                <input type="number" 
+                                       class="form-control measurement-input" 
+                                       id="sleeve_cuff" 
+                                       name="sleeve_cuff" 
+                                       step="0.1" 
+                                       min="0"
+                                       value="{{ measurement.sleeve_cuff or '' }}"
+                                       placeholder="Enter sleeve cuff measurement">
+                                <div class="current-value">
+                                    <i class="bi bi-clock-history"></i>
+                                    Current: {{ measurement.sleeve_cuff or 'Not set' }}" 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="measurement-field">
+                            <label for="notes">
+                                <i class="bi bi-journal-text"></i> Additional Notes
+                            </label>
+                            <textarea class="form-control measurement-input" 
+                                      id="notes" 
+                                      name="notes" 
+                                      rows="4" 
+                                      data-original="{{ measurement.notes or '' }}"
+                                      placeholder="Any additional notes or special requirements?">{{ measurement.notes or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-submit btn-lg" id="submitBtn">
+                        <span class="button-text">
+                            <i class="bi bi-check-circle"></i>
+                            Update Measurements
+                        </span>
+                        <span class="loading-spinner">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Updating...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('measurementForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const buttonText = submitBtn.querySelector('.button-text');
+            const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            // Hide previous messages
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Show loading state
+            buttonText.style.display = 'none';
+            loadingSpinner.style.display = 'inline';
+            submitBtn.disabled = true;
+            
+            try {
+                // Create a custom FormData object that only includes changed fields
+                const formData = new FormData();
+                const token = document.querySelector('input[name="token"]').value;
+                formData.append('token', token);
+                
+                // Get all measurement inputs and only include those that have changed
+                const measurementInputs = document.querySelectorAll('.measurement-input');
+                let hasChanges = false;
+                
+                measurementInputs.forEach(input => {
+                    const currentValue = input.value.trim();
+                    const currentDiv = input.closest('.measurement-field');
+                    const currentText = currentDiv.querySelector('.current-value').textContent;
+                    
+                    // Extract current value from the text (e.g., "Current: 14"" -> "14")
+                    // Handle "Not set" case
+                    let originalValue = '';
+                    if (currentText.includes('Not set')) {
+                        originalValue = '';
+                    } else {
+                        const currentValueMatch = currentText.match(/Current: ([\d.]+)/);
+                        originalValue = currentValueMatch ? currentValueMatch[1] : '';
+                    }
+                    
+                    // Only include the field if the value has changed and is not empty
+                    if (currentValue !== originalValue && currentValue !== '') {
+                        formData.append(input.name, currentValue);
+                        hasChanges = true;
+                        console.log(`Including ${input.name}: ${currentValue} (original: ${originalValue})`);
+                    } else {
+                        console.log(`Skipping ${input.name}: ${currentValue} (original: ${originalValue})`);
+                    }
+                });
+                
+                // Handle notes field separately
+                const notesField = document.getElementById('notes');
+                if (notesField) {
+                    const notesValue = notesField.value.trim();
+                    const originalNotes = notesField.getAttribute('data-original') || '';
+                    if (notesValue !== '' && notesValue !== originalNotes) {
+                        formData.append('notes', notesValue);
+                        hasChanges = true;
+                        console.log(`Including notes: ${notesValue}`);
+                    }
+                }
+                
+                // If no changes were made, show a message
+                if (!hasChanges) {
+                    errorText.textContent = 'No changes detected. Please update at least one measurement.';
+                    errorMessage.style.display = 'block';
+                    buttonText.style.display = 'inline';
+                    loadingSpinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // Debug: Log all form data
+                console.log('Form data being sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                const response = await fetch(`/customer-form/${token}/submit`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error response:', errorText);
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Response result:', result);
+                
+                if (result.success) {
+                    successMessage.style.display = 'block';
+                    // Scroll to top to show success message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Disable form after successful submission
+                    const inputs = document.querySelectorAll('input, textarea');
+                    inputs.forEach(input => input.disabled = true);
+                    submitBtn.style.display = 'none';
+                } else {
+                    errorText.textContent = result.error || 'Failed to update measurements';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorText.textContent = 'Network error. Please try again.';
+                errorMessage.style.display = 'block';
+            } finally {
+                // Reset button state if there was an error
+                if (errorMessage.style.display !== 'none') {
+                    buttonText.style.display = 'inline';
+                    loadingSpinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

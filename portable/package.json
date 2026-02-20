@@ -18,13 +18,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anujghosh1220/Draping-Threadss.git"
+    "url": "git+https://github.com/anujghosh1220/cloth-pattern-designer.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/anujghosh1220/Draping-Threadss/issues"
+    "url": "https://github.com/anujghosh1220/cloth-pattern-designer/issues"
   },
   "dependencies": {
     "electron-updater": "^6.8.3"
@@ -39,7 +39,7 @@
     "publish": {
       "provider": "github",
       "owner": "anujghosh1220",
-      "repo": "Draping-Threadss"
+      "repo": "cloth-pattern-designer"
     },
     "directories": {
       "output": "dist"
