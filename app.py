@@ -1154,7 +1154,7 @@ def customer_measurements():
     phone = request.args.get('phone')
     name = request.args.get('name')
     
-    # Base query with descending job numbers (most recent = 1)
+    # Create subquery for job numbers
     subquery = db.session.query(
         SavedMeasurement.id,
         db.func.row_number().over(
