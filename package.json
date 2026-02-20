@@ -1,0 +1,84 @@
+{
+  "name": "cloth-pattern-designer",
+  "version": "1.0.0",
+  "description": "![Draping Threads Logo](static/images/logo.png)",
+  "main": "main.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-linux": "electron-builder --linux",
+    "build-mac": "electron-builder --mac",
+    "dist": "npm run build",
+    "pack": "electron-builder --dir",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anujghosh1220/cloth-pattern-designer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anujghosh1220/cloth-pattern-designer/issues"
+  },
+  "devDependencies": {
+    "electron": "^40.1.0",
+    "electron-builder": "^26.7.0",
+    "electron-updater": "^6.8.3"
+  },
+  "build": {
+    "appId": "com.drapingthreads.clothpatterndesigner",
+    "productName": "Draping Threads",
+    "publish": {
+      "provider": "github",
+      "owner": "anujghosh1220",
+      "repo": "cloth-pattern-designer"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "app.py",
+      "static/**/*",
+      "templates/**/*",
+      "instance/**/*",
+      "migrations/**/*",
+      "requirements.txt",
+      "cloth.db",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "static",
+        "to": "static"
+      },
+      {
+        "from": "templates",
+        "to": "templates"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    }
+  }
+}

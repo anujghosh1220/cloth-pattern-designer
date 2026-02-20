@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Add New Customer</h4>
+                </div>
+                <div class="card-body">
+                    <form id="customerForm" method="POST" action="{{ url_for('add_customer') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Alert for form feedback -->
+                        <div id="formAlert" class="alert d-none" role="alert"></div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="invalid-feedback">Please provide a name.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text">A unique email is required for each customer.</div>
+                            <div class="invalid-feedback">Please provide a valid email address.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('customers') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span class="spinner-border spinner-border-sm d-none" id="spinner" role="status" aria-hidden="true"></span>
+                                <span id="btnText">Save Customer</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('customerForm');
+    const alertDiv = document.getElementById('formAlert');
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Reset form state
+        form.classList.remove('was-validated');
+        alertDiv.classList.add('d-none');
+        
+        // Validate form
+        if (!form.checkValidity()) {
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Saving...';
+        
+        try {
+            // Get form data
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            
+            // Send POST request
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Show success message
+                showAlert('Customer added successfully!', 'success');
+                // Redirect to customers page after 1.5 seconds
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('customers') }}";
+                }, 1500);
+            } else {
+                // Show error message
+                showAlert(result.error || 'An error occurred while saving the customer.', 'danger');
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('An unexpected error occurred. Please try again.', 'danger');
+            submitBtn.disabled = false;
+        } finally {
+            spinner.classList.add('d-none');
+            btnText.textContent = 'Save Customer';
+        }
+    });
+    
+    function showAlert(message, type) {
+        alertDiv.textContent = message;
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.classList.remove('d-none');
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.add('fade');
+            setTimeout(() => alertDiv.classList.add('d-none'), 150);
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}
