@@ -16,9 +16,5 @@
   "bugs": {
     "url": "https://github.com/anujghosh1220/cloth-pattern-designer/issues"
   },
-  "homepage": "https://github.com/anujghosh1220/cloth-pattern-designer#readme",
-  "devDependencies": {
-    "electron": "^40.1.0",
-    "electron-builder": "^26.7.0"
-  }
+  "homepage": "https://github.com/anujghosh1220/cloth-pattern-designer#readme"
 }
