@@ -1,56 +1,36 @@
-# Large files and build outputs
-dist/
-build/
+# Large executable files
 *.exe
 *.pkg
 *.zip
-*.tar.gz
-*.dmg
+
+# Build directories
+build/
+dist/
 
 # Node modules
 node_modules/
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
+# Large application files
+**/*.asar
+**/electron.exe
 
-# Instance and database
-instance/
-*.db
-*.sqlite
-*.sqlite3
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Uploads and temporary files
-uploads/
-temp/
-*.tmp
-
-# IDE and editor files
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
 
 # Logs
 *.log
-logs/
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Electron specific
-app/
-release/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
